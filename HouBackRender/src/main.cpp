@@ -22,11 +22,10 @@ int main()
 	const char* glsl_version = nullptr;
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-	// glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	float main_scale = ImGui_ImplGlfw_GetContentScaleForMonitor(glfwGetPrimaryMonitor());
-	GLFWwindow* window = glfwCreateWindow((int)(1280*main_scale), (int)(800*main_scale), "Hello World", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow((int)(800*main_scale), (int)(450*main_scale), "Hello World", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();
@@ -45,12 +44,28 @@ int main()
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	// io.ConfigViewportsNoAutoMerge = true;
+	// io.ConfigViewportsNoTaskBarIcon = true;
 	
 	ImGui::StyleColorsDark();
 	ImGuiStyle& style = ImGui::GetStyle();
 	style.ScaleAllSizes(main_scale);
 	style.FontScaleDpi = main_scale;
 	
+#if GLFW_VERSION_MAJOR >=3 && GLFW_VERSION_MINOR >= 3
+	io.ConfigDpiScaleFonts = true;
+	io.ConfigDpiScaleViewports = true;
+#endif
+	
+	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		style.WindowRounding = 0.0f;
+		style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+	}
+	
+	// Setup Platform/Renderer backends
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init(glsl_version);
 	
@@ -70,14 +85,15 @@ int main()
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+		ImGui::DockSpaceOverViewport();
+		
 		if (show_demo_window)
 			ImGui::ShowDemoWindow(&show_demo_window);
 		{
 			static float f = 0.0f;
 			static int counter = 0;
-
+	
 			ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
 			ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
 			ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
 			ImGui::Checkbox("Another Window", &show_another_window);
@@ -110,7 +126,15 @@ int main()
 		glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
 		glClear(GL_COLOR_BUFFER_BIT);
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
+		
+		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		{
+			GLFWwindow* backup_current_context = glfwGetCurrentContext();
+			ImGui::UpdatePlatformWindows();
+			ImGui::RenderPlatformWindowsDefault();
+			glfwMakeContextCurrent(backup_current_context);
+		}
+		
 		glfwSwapBuffers(window);
 	}
 	ImGui_ImplOpenGL3_Shutdown();
