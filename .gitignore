@@ -6,3 +6,5 @@
 *.idea
 bin/
 bin-int/
+HouBackRender/Third/glfw_src/
+test*.bat

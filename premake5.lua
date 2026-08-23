@@ -15,7 +15,7 @@ project "HouBackRender"
     language "C++"
 
     targetdir("bin/" .. outputdir .. "/%{prj.name}")
-    objdir("bin/" .. outputdir .. "/%{prj.name}")
+    objdir("bin-int/" .. outputdir .. "/%{prj.name}")
     files{
         "%{prj.name}/src/**.h",
         "%{prj.name}/src/**.cpp",

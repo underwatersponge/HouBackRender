@@ -1,13 +1,14 @@
-#include <iostream>
+#include "GenBatch.h"
+#include "Utility.cpp"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
 #include "glad/glad.h"
 
+#include <iostream>
 static void GlfwErrorCallback(int error, const char* description)
 {
 	std::cout << "GLFW ERROR:" << error << description<< "\n";
@@ -15,6 +16,9 @@ static void GlfwErrorCallback(int error, const char* description)
 
 int main()
 {
+	// init need class
+	GenBatch genBatch = GenBatch();
+
 	glfwSetErrorCallback(GlfwErrorCallback);
 	
 	if (!glfwInit())
@@ -87,26 +91,51 @@ int main()
 		ImGui::NewFrame();
 		ImGui::DockSpaceOverViewport();
 		
+#ifdef _DEBUG
 		if (show_demo_window)
 			ImGui::ShowDemoWindow(&show_demo_window);
+#endif
 		{
-			static float f = 0.0f;
-			static int counter = 0;
-	
-			ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-			ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-			ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-			ImGui::Checkbox("Another Window", &show_another_window);
-
-			ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-			ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-			if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-				counter++;
+			// ============================ //
+			ImGui::Begin("Setting");
+			ImGui::Text("hello this is a test");
+			if(ImGui::Button("Open"))
+			{
+				genBatch.SetHouBinPathFromDir(window);
+			}
 			ImGui::SameLine();
-			ImGui::Text("counter = %d", counter);
+			if (ImGui::Button("OpenDir"))
+			{
+				genBatch.AddHipPathFromFile(window);
+			}
+			static char renNodeBuf[100] = "";
+			int bufSize = 100;
+			ImGui::InputText("##RenNode", renNodeBuf, 100);
+			if (ImGui::Button("AddToRender"))
+			{
+				genBatch.AddHouRenNodePath(std::string(renNodeBuf));
+			}
 
-			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+			// status view
+			Utility::ImGuiTextWithScale("Selected HouBinPath:", 1.5f);
+			ImGui::Text(genBatch.GetHouBinPath().c_str());
+			
+			Utility::ImGuiTextWithScale("Choosed Render Hips:", 1.5f);
+			const std::vector<std::string> hipFiles = genBatch.GetHipPaths();
+			for (auto ite = hipFiles.begin(); ite != hipFiles.end(); ++ite)
+			{
+				ImGui::Text(ite->c_str());
+			}
+
+			Utility::ImGuiTextWithScale("Choosed Render Nodes:", 1.5f);
+			const std::vector<std::string> renNodes = genBatch.GetNodesPaths();
+			for (auto ite = renNodes.begin(); ite != renNodes.end(); ++ite)
+			{
+				ImGui::Text(ite->c_str());
+			}
+
+			if(ImGui::Button("GenBatch"))
+				genBatch.WriteBatchToFile();
 			ImGui::End();
 		}
 		
@@ -143,5 +172,8 @@ int main()
 	
 	glfwDestroyWindow(window);
 	glfwTerminate();
+	
+	// ============== //
+	//GenBatch().WriteToFile();
 	return 0;
 }
