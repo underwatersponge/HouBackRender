@@ -5,14 +5,17 @@
 
 #include <string>
 #include <sstream>
+#include <fstream>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
-
 #include <imgui.h>
+#include <json.hpp>
 
+#include <iostream>
 namespace Utility
 {
+    using json = nlohmann::json;
 
     static std::string GetDirPath(GLFWwindow* window)
     {
@@ -93,5 +96,26 @@ namespace Utility
         ImGui::PushFont(NULL, style.FontSizeBase * scale);
         ImGui::Text(fmt);
         ImGui::PopFont();
+    }
+
+    static void ImGuiHelpMarker(const char* desc)
+    {
+        ImGui::TextDisabled("(?)");
+        if (ImGui::BeginItemTooltip())
+        {
+            ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+            ImGui::TextUnformatted(desc);
+            ImGui::PopTextWrapPos();
+            ImGui::EndTooltip();
+        }
+    }
+
+    static json ReadJson(const std::filesystem::path& path)
+    {
+        json data;
+        std::ifstream f(path);
+        if(f.is_open())
+            data = json::parse(f);
+        return data;
     }
 }

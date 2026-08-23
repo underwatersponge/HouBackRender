@@ -8,10 +8,12 @@ Third = {}
 Third["DearImgui"] = "%{prj.name}/Third/DearImgui"
 Third["GLFW"] = "%{prj.name}/Third/GLFW"
 Third["glad"] = "%{prj.name}/Third/glad"
+Third["nlohmann_json"] = "%{prj.name}/Third/nlohmann_json"
 
 project "HouBackRender"
     location "HouBackRender"
-    kind "ConsoleApp"
+    -- kind "ConsoleApp"
+    kind "WindowedApp"
     language "C++"
 
     targetdir("bin/" .. outputdir .. "/%{prj.name}")
@@ -27,7 +29,7 @@ project "HouBackRender"
         "%{Third.DearImgui}/backends/imgui_impl_glfw.cpp",
         "%{Third.DearImgui}/backends/imgui_impl_opengl3.h",
         "%{Third.DearImgui}/backends/imgui_impl_opengl3.cpp",
-
+        "%{Third.nlohmann_json}/json.hpp",
     }
 
     includedirs
@@ -36,6 +38,7 @@ project "HouBackRender"
         "%{Third.GLFW}/include",
         "%{Third.DearImgui}",
         "%{Third.DearImgui}/backends",
+        "%{Third.nlohmann_json}",
     }
 
     libdirs

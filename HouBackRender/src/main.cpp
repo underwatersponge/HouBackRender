@@ -7,17 +7,17 @@
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
 #include "glad/glad.h"
-
 #include <iostream>
+
 static void GlfwErrorCallback(int error, const char* description)
 {
 	std::cout << "GLFW ERROR:" << error << description<< "\n";
 }
 
-int main()
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	// init need class
-	GenBatch genBatch = GenBatch();
+	GenBatch genBatch = GenBatch("test.json");
 
 	glfwSetErrorCallback(GlfwErrorCallback);
 	
@@ -29,7 +29,7 @@ int main()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	float main_scale = ImGui_ImplGlfw_GetContentScaleForMonitor(glfwGetPrimaryMonitor());
-	GLFWwindow* window = glfwCreateWindow((int)(800*main_scale), (int)(450*main_scale), "Hello World", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow((int)(500*main_scale), (int)(600*main_scale), "HouBackRender", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();
@@ -96,18 +96,72 @@ int main()
 			ImGui::ShowDemoWindow(&show_demo_window);
 #endif
 		{
-			// ============================ //
-			ImGui::Begin("Setting");
-			ImGui::Text("hello this is a test");
-			if(ImGui::Button("Open"))
+			static bool b_open = true;
+			// ============================ 
+			ImGuiWindowFlags windowFlags = 0;
+			windowFlags |= ImGuiWindowFlags_MenuBar;
+
+			// TODO: a beautifully ui maybe use a tree-like?
+			ImGui::Begin("Setting", nullptr, windowFlags);
+			
+			if (ImGui::BeginMenuBar())
+			{
+				if (ImGui::BeginMenu("SaveSetting"))
+				{
+					if (ImGui::MenuItem("SaveBinDir"))
+					{
+						genBatch.WriteCurSettingToFile("test.json", GenBatch::SaveSettingType::OnlyHouBinPath);
+					}
+					if (ImGui::MenuItem("SaveBinAHip"))
+					{
+						genBatch.WriteCurSettingToFile("test.json", GenBatch::SaveSettingType::BinDirAHipPath);
+					}
+					if (ImGui::MenuItem("SaveAll"))
+					{
+						genBatch.WriteCurSettingToFile("test.json", GenBatch::SaveSettingType::All);
+					}
+					ImGui::EndMenu();
+				}
+					ImGui::EndMenuBar();
+			}
+			
+			ImGui::Text("welcome have fun!"); ImGui::SameLine();
+			Utility::ImGuiHelpMarker("note:be carefully use the savesetting which save the all and SaveBinAHip(maybe) now!\nit do not have mush test(even no)");
+			Utility::ImGuiTextWithScale("Helpers->:", 1.3f); ImGui::SameLine();
+			Utility::ImGuiHelpMarker("Click button #SelHouBin# to choose your houdini bin directory! Click button #SelHipFile# to choose your hipfile! \n"
+				"Click button #CleanFiles# to clean the current selected hip file! Click button #ClearAllRenNode# to clean current seted ren hou node path!\n"
+				" Type your hou node path in below inputbox the click button #AddToRender# to add it to render\n "
+				"Note:now only support type one by one!\n "
+				"Click button #GenBatch# to generate batch file,then double click gen batch file to render!");
+			Utility::ImGuiTextWithScale("Tips->", 1.3f); ImGui::SameLine();
+			Utility::ImGuiHelpMarker("For now do not support multi files!but you can render multfiles with generate a batch file then clean the hipfile and rendnodepath and create new of they to generate a new batch file!");
+			ImGui::Spacing();
+
+			if(ImGui::Button("SelHouBin"))
 			{
 				genBatch.SetHouBinPathFromDir(window);
 			}
 			ImGui::SameLine();
-			if (ImGui::Button("OpenDir"))
+			if (ImGui::Button("SelHipFile"))
 			{
 				genBatch.AddHipPathFromFile(window);
 			}
+			ImGui::SameLine();
+			if (ImGui::Button("CleanFiles"))
+			{
+				genBatch.CleanHipFiles();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("ClearAllRenNode"))
+			{
+				genBatch.CleanAllRenNode();
+			}
+			/*ImGui::SameLine();
+			if (ImGui::Button("SaveCurSetting"))
+			{
+				genBatch.WriteCurSettingToFile("test.json");
+			}*/
+
 			static char renNodeBuf[100] = "";
 			int bufSize = 100;
 			ImGui::InputText("##RenNode", renNodeBuf, 100);
@@ -117,8 +171,9 @@ int main()
 			}
 
 			// status view
-			Utility::ImGuiTextWithScale("Selected HouBinPath:", 1.5f);
-			ImGui::Text(genBatch.GetHouBinPath().c_str());
+			ImGui::SeparatorText("Current Status!");
+			Utility::ImGuiTextWithScale("Selected HouBinDir:", 1.5f);
+			ImGui::Text(genBatch.GetHouBinDir().c_str());
 			
 			Utility::ImGuiTextWithScale("Choosed Render Hips:", 1.5f);
 			const std::vector<std::string> hipFiles = genBatch.GetHipPaths();
@@ -134,8 +189,12 @@ int main()
 				ImGui::Text(ite->c_str());
 			}
 
+			if (ImGui::Button("ReadFromJson"))
+			{
+				genBatch.GenFromFile("test.json");
+			}
 			if(ImGui::Button("GenBatch"))
-				genBatch.WriteBatchToFile();
+				genBatch.WriteBatchFile();
 			ImGui::End();
 		}
 		
@@ -173,7 +232,5 @@ int main()
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	
-	// ============== //
-	//GenBatch().WriteToFile();
 	return 0;
 }
