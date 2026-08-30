@@ -116,6 +116,7 @@ namespace Utility
         std::ifstream f(path);
         if(f.is_open())
             data = json::parse(f);
+        f.close();
         return data;
     }
 }

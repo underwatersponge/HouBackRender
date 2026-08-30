@@ -12,8 +12,8 @@ Third["nlohmann_json"] = "%{prj.name}/Third/nlohmann_json"
 
 project "HouBackRender"
     location "HouBackRender"
-    -- kind "ConsoleApp"
-    kind "WindowedApp"
+    kind "ConsoleApp"
+    -- kind "WindowedApp"
     language "C++"
 
     targetdir("bin/" .. outputdir .. "/%{prj.name}")

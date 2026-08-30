@@ -1,0 +1,16 @@
+{
+    "RenList": [
+        {
+            "HipPath": "C:/Users/HRXlubang/Desktop/BackRen/TestHip1/test1.hip",
+            "RenNode": [
+                "/out/a",
+                "/out/b",
+                "/out/c"
+            ]
+        },
+        {
+            "HipPath": "C:/Users/HRXlubang/Desktop/BackRen/TestHIP/Test.hip",
+            "RenNode": []
+        }
+    ]
+}

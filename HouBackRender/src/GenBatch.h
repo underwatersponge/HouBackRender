@@ -1,7 +1,6 @@
 ﻿#pragma once
 
-#include <vector>
-#include <string>
+#include "RenContainerNode.h"
 
 #include <json.hpp>
 
@@ -11,37 +10,46 @@
 class GenBatch
 {
     using json = nlohmann::json;
-    enum class SaveSettingType : uint32_t;
 public:
-    GenBatch(std::filesystem::path jsoonpath);
-    void Init(std::filesystem::path jsonpath);
+    enum class SaveSettingType : uint32_t;
+    GenBatch();
+    GenBatch(std::filesystem::path configPath, std::filesystem::path renListPath = std::filesystem::path());
 
-    void WriteBatchFile();
-
-    void SetHouBinPath(const std::string& dirpath);
-    void AddHipPath(const std::string& hippath);
-    void AddHouRenNodePath(const std::string& nodepath);
+    void Init(const std::filesystem::path &configPath, const std::filesystem::path& renInfoPath = std::filesystem::path());
+    void ReadConfigFromFile(const std::filesystem::path& jsonPath);
+    void ReadRenContainerFromFile(const std::filesystem::path& jsonPath);
+    
+    void SetHouBinPath(const std::string& dirPath);
+    void AddHipPath(const std::string& hipPath);
+    void AddHouRenNodePath(size_t index, const std::string& nodePath);
 
     void SetHouBinPathFromDir(GLFWwindow* window);
-    void AddHipPathFromFile(GLFWwindow* window, char* filter = ".hip");
+    void AddHipPathFromFile(GLFWwindow* window, const char* filter = ".hip");
 
-    void CleanHipFiles();
-    void CleanAllRenNode();
+    void Clean(size_t index);
+    void CleanAll();
+    
+    void GenRunPyBatch();
+    void GenConfigJson();
+    void GenRenListJson();
 
-    void GenFromFile(std::filesystem::path jsonpath);
-    void WriteCurSettingToFile(std::filesystem::path jsonpath, GenBatch::SaveSettingType = SaveSettingType::OnlyHouBinPath);
-
+    size_t GetSize() const;
+ 
     const std::string& GetHouBinDir() const
     {
         return m_HouBinDir;
     }
-    const std::vector<std::string>& GetHipPaths() const
+    const std::string GetHipPath(uint32_t index = 0) const
     {
-        return m_HipFiles;
+        if(m_RenContainer.size() >0 && index <= m_RenContainer.size())
+            return m_RenContainer.at(index).GetHipFilePath();
+        return std::string();
     }
-    const std::vector<std::string>& GetNodesPaths() const
+    const std::vector<std::string> GetNodesPaths(uint32_t index = 0) const
     {
-        return m_RenNodes;
+        if(m_RenContainer.size() > 0 && index <= m_RenContainer.size())
+            return m_RenContainer.at(index).GetRenNodes();
+        return std::vector<std::string>();
     }
 public:
     enum class SaveSettingType : uint32_t
@@ -51,10 +59,6 @@ public:
         All = 2 // do not use 
     };
 private:
-    std::string SplicString();
-private:
-    static uint32_t m_Index;
     std::string m_HouBinDir;
-    std::vector<std::string> m_HipFiles;
-    std::vector<std::string> m_RenNodes;
+    std::vector<RenContainerNode> m_RenContainer;
 };

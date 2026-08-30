@@ -5,197 +5,180 @@
 #include <fstream>
 #include <algorithm>
 
-GenBatch::GenBatch(std::filesystem::path jsonpath)
+GenBatch::GenBatch()
 {
-    Init(jsonpath);
 }
 
-void GenBatch::Init(std::filesystem::path jsonpath)
+GenBatch::GenBatch(std::filesystem::path configPath, std::filesystem::path renListPath)
 {
-    GenFromFile(jsonpath);
+    Init(configPath, renListPath);
 }
 
-uint32_t GenBatch::m_Index = 1;
-
-// TODO:use better way
-void GenBatch::WriteBatchFile()
+void GenBatch::Init(const std::filesystem::path& configPath, const std::filesystem::path& renInfoPath)
 {
-    std::string filename = "test" + std::to_string(m_Index) + ".bat";
+    if (!configPath.empty())
+        ReadConfigFromFile(configPath);
+    if (!renInfoPath.empty())
+        ReadRenContainerFromFile(renInfoPath);
+}
+
+void GenBatch::ReadConfigFromFile(const std::filesystem::path& jsonPath)
+{
+    const json jsonData = Utility::ReadJson(jsonPath);
+    if (jsonData.contains("HouBinDir"))
+        m_HouBinDir = jsonData.at("HouBinDir").get<std::string>();
+}
+void GenBatch::ReadRenContainerFromFile(const std::filesystem::path& jsonPath)
+{
+    const json jsonDatat = Utility::ReadJson(jsonPath);
+    if (jsonDatat.contains("RenList"))
+    {
+        const auto& RenList = jsonDatat.at("RenList");
+        for (auto ite = RenList.begin(); ite != RenList.end(); ++ite)
+        {
+            if (ite->contains("HipPath"))
+            {
+                std::string hipPath = ite->at("HipPath").get<std::string>();
+                std::vector<std::string> renNodes;
+                if (ite->contains("RenNode"))
+                {
+                    renNodes = ite->at("RenNode").get<std::vector<std::string>>();
+                }
+                m_RenContainer.push_back(RenContainerNode(hipPath, renNodes));
+            }
+        }
+    }
+}
+
+void GenBatch::GenConfigJson()
+{
+    std::string filename = "config.json";
+    json config;
+    config = {
+        {"HouBinDir", m_HouBinDir}
+    };
+
+    std::string s = config.dump(4);
     std::fstream fileOut;
-    
     fileOut.open(filename, std::ios_base::out);
     if (!fileOut.is_open())
     {
-        std::cout <<"error have occur " << "\n";
+        std::cout << "error can ont open file:" << filename << std::endl;
+    }
+    else {
+        fileOut << s << std::endl;
+        fileOut.close();
+    }
+}
+
+void GenBatch::GenRenListJson()
+{
+    // test code//
+    if (0) {
+        std::vector<std::string> t = { "/out/a","/out/b","/out/c" };
+        m_RenContainer.push_back(RenContainerNode("a.hip", t));
+        m_RenContainer.push_back(RenContainerNode("b.hip", t));
+    }
+    std::string filename = "RenList.json";
+    json renList;
+    for (auto ite = m_RenContainer.begin(); ite != m_RenContainer.end(); ++ite)
+    {
+        const std::string& hipPath = ite->GetHipFilePath();
+        const std::vector<std::string> renNodes = ite->GetRenNodes();
+        
+        renList["RenList"].push_back(
+            { 
+                {"HipPath",hipPath},
+                {"RenNode", renNodes}
+            }
+            );
+    }
+    std::cout << renList;
+    std::ofstream outFile(filename);
+    if (!outFile.is_open())
+        std::cout << "Error can not open file:" << filename;
+    //std::string s = renList.dump(4);
+    //outFile << s;
+    outFile << std::setw(4) << renList << "\n";
+    outFile.close();
+}
+
+size_t GenBatch::GetSize() const
+{
+    return m_RenContainer.size();
+}
+
+void GenBatch::GenRunPyBatch()
+{
+    std::string filename = "RunPyTest.bat";
+    std::fstream fileOut;
+    fileOut.open(filename, std::ios_base::out);
+    if (!fileOut.is_open())
+    {
+        std::cout << "error can not open file:" << filename << "\n";
     }
     else
     {
-        if (0)
+        std::string hythonPath;
+        const json jsonData = Utility::ReadJson("config.json");
+        if (jsonData.contains("HouBinDir"))
         {
-            fileOut << R"(set PATH=%PATH%;C:\Program Files\Side Effects Software\Houdini 20.5.278\bin)";
-            fileOut << "\n";
-            fileOut << R"( hscript -c "mread C:/Users/HRXlubang/Desktop/TestHIP/Test.hip; render -V obj/Pars/CacheNode/render;render -V out/RenNode;render -V out/RenNode1;exist;exist")";
+            hythonPath = jsonData.at("HouBinDir").get<std::string>() + "\\hython.exe";
+            std::cout << hythonPath;
         }
-        std::string line0 = "set PATH=%PATH%;" + m_HouBinDir;
-        std::string line1 = SplicString();
-
-        fileOut << line0;
-        fileOut << "\n";
-        fileOut << line1;
+        else 
+        {
+            if(!m_HouBinDir.empty())
+                hythonPath = m_HouBinDir + "\\hython.exe";
+        }
+        std::string batchLine = std::string("call") + " \"" + hythonPath + "\" " + "testRen.py";// TODO:find a better method
+        fileOut << batchLine << "\n";
+        fileOut << "pause";
+        fileOut.close();
     }
-    ++m_Index;
 }
 
-void GenBatch::SetHouBinPath(const std::string& dirpath)
+void GenBatch::SetHouBinPath(const std::string& dirPath)
 {
-    if(!dirpath.empty())
-        m_HouBinDir = dirpath;
+    if(!dirPath.empty())
+        m_HouBinDir = dirPath;
 }
 
-void GenBatch::AddHipPath(const std::string& hippath)
+void GenBatch::AddHipPath(const std::string& hipPath)
 {
     // TODO: true multi file support
-    m_HipFiles.clear();
-    m_RenNodes.shrink_to_fit();
-    if(!hippath.empty())
-       m_HipFiles.emplace_back(hippath);
+    if(!hipPath.empty())
+        m_RenContainer.emplace_back(hipPath);
 }
 
-void GenBatch::AddHouRenNodePath(const std::string& nodepath)
+void GenBatch::AddHouRenNodePath(size_t index, const std::string& nodePath)
 {
-    if(!nodepath.empty())
-        m_RenNodes.emplace_back(nodepath);
+    if (!nodePath.empty())
+        m_RenContainer.at(index).AddRenNode(nodePath);
 }
 
 void GenBatch::SetHouBinPathFromDir(GLFWwindow* window)
 {
     std::string path = Utility::GetDirPath(window);
-    m_HouBinDir = path;
+    if (!path.empty())
+        m_HouBinDir = path;
 }
 
-void GenBatch::AddHipPathFromFile(GLFWwindow* window, char* filter)
+void GenBatch::AddHipPathFromFile(GLFWwindow* window, const char* filter)
 {
     std::string path = Utility::GetFilePath(window, filter);
     std::replace(path.begin(), path.end(), '\\', '/');
-    CleanAllRenNode();
     AddHipPath(path);
 }
 
-void GenBatch::CleanHipFiles()
+void GenBatch::Clean(size_t index)
 {
-    m_HipFiles.clear();
-    m_HipFiles.shrink_to_fit();
+    if (index > m_RenContainer.size())
+        return;
+    m_RenContainer.erase(m_RenContainer.begin() + index);
 }
 
-void GenBatch::CleanAllRenNode()
+void GenBatch::CleanAll()
 {
-    m_RenNodes.clear();
-    m_RenNodes.shrink_to_fit();
-#ifdef _DEBUG
-    std::cout << "size:" << m_RenNodes.size() <<"storage:" << m_RenNodes.capacity() << std::endl;
-#endif
-}
-
-void GenBatch::GenFromFile(const std::filesystem::path jsonpath)
-{
-    const json jsonData = Utility::ReadJson(jsonpath);
-    //std::cout << jsonData << "\n";
-
-    // TODO: multi hip file support error handle
-    if (jsonData.contains("HouBinDir"))
-    {
-
-        m_HouBinDir = jsonData.at("HouBinDir").get<std::string>();
-#ifdef _DEBUG
-        std::cout << m_HouBinDir << "\n";
-#endif
-    }
-
-    if (jsonData.contains("HipPath"))
-    {
-        std::string hipFile  = jsonData.at("HipPath").get<std::string>();
-        m_HipFiles.emplace_back(hipFile);
-#ifdef _DEBUG
-        std::cout << m_HipFiles[0] << "\n";
-#endif
-    }
-
-    if (jsonData.contains("RenNodes"))
-    {
-        std::vector<std::string> renNodePaths = jsonData.at("RenNodes").get<std::vector<std::string>>();
-#ifdef _DEBUG
-        for (auto ite = renNodePaths.begin(); ite != renNodePaths.end(); ++ite)
-        {
-            std::cout << *ite << "\n";
-        }
-#endif
-        m_RenNodes = renNodePaths;
-    }
-}
-
-void GenBatch::WriteCurSettingToFile(std::filesystem::path jsonpath, GenBatch::SaveSettingType type)
-{
-    json settings;
-    switch (type) {
-
-        case(SaveSettingType::OnlyHouBinPath):
-        {
-            settings = {
-                {"HouBinDir", m_HouBinDir}
-            };
-            break;
-        }
-        case(SaveSettingType::BinDirAHipPath):
-        {
-            settings = {
-                {"HouBinDir", m_HouBinDir},
-                {"HipPath", m_HipFiles.at(0)},
-            };
-            break;
-        }
-        case(SaveSettingType::All):
-        {
-            settings = {
-            {"HouBinDir", m_HouBinDir},
-            {"HipPath", m_HipFiles.at(0)},
-            {"RenNodes", m_RenNodes},
-            };
-            break;
-        }
-        default:
-        {
-            settings = {
-                {"HouBinDir", m_HouBinDir}
-            };
-            break;
-        }
-    }
-#ifdef _DEBUG
-    std::cout << "\n";
-    std::cout << settings; 
-#endif
-    std::string s = settings.dump(4);
-    std::ofstream outFile(jsonpath.c_str(), std::ios::out);
-    if (!outFile.is_open())
-    {
-        std::cerr << "can not open file " << "\n";
-    }
-    outFile << s << std::endl;
-    outFile.close();
-}
-
-/*
-std::string s = R"( hscript -c "mread C:/Users/UserName/Desktop/TestHIP/Test.hip;
-render -V obj/Pars/CacheNode/render;render -V out/RenNode;render -V out/RenNode1;exist;exist")";
-*/
-// TODO: use better way
-std::string GenBatch::SplicString()
-{
-    std::string line = R"(hscript -c "mread )" + m_HipFiles[0] + ";";
-    for (auto ite = m_RenNodes.begin(); ite != m_RenNodes.end(); ++ite)
-    {
-        line += R"(render -V )" + *ite + ";";
-    }
-    line += R"(exit;exit;")";
-    return line;
+    m_RenContainer.clear();
 }

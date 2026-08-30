@@ -14,10 +14,11 @@ static void GlfwErrorCallback(int error, const char* description)
 	std::cout << "GLFW ERROR:" << error << description<< "\n";
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+//int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+int main()
 {
 	// init need class
-	GenBatch genBatch = GenBatch("test.json");
+	GenBatch genBatch = GenBatch("config.json", "RenList.json");
 
 	glfwSetErrorCallback(GlfwErrorCallback);
 	
@@ -110,15 +111,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					if (ImGui::MenuItem("SaveBinDir"))
 					{
-						genBatch.WriteCurSettingToFile("test.json", GenBatch::SaveSettingType::OnlyHouBinPath);
+						//genBatch.WriteCurSettingToFile("test.json", GenBatch::SaveSettingType::OnlyHouBinPath);
 					}
 					if (ImGui::MenuItem("SaveBinAHip"))
 					{
-						genBatch.WriteCurSettingToFile("test.json", GenBatch::SaveSettingType::BinDirAHipPath);
+						//genBatch.WriteCurSettingToFile("test.json", GenBatch::SaveSettingType::BinDirAHipPath);
 					}
 					if (ImGui::MenuItem("SaveAll"))
 					{
-						genBatch.WriteCurSettingToFile("test.json", GenBatch::SaveSettingType::All);
+						//genBatch.WriteCurSettingToFile("test.json", GenBatch::SaveSettingType::All);
 					}
 					ImGui::EndMenu();
 				}
@@ -147,54 +148,76 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				genBatch.AddHipPathFromFile(window);
 			}
 			ImGui::SameLine();
-			if (ImGui::Button("CleanFiles"))
+			if (ImGui::Button("Clean"))
 			{
-				genBatch.CleanHipFiles();
+				genBatch.Clean(0);
 			}
 			ImGui::SameLine();
-			if (ImGui::Button("ClearAllRenNode"))
+			if (ImGui::Button("ClearAll"))
 			{
-				genBatch.CleanAllRenNode();
+				genBatch.CleanAll();
 			}
-			/*ImGui::SameLine();
-			if (ImGui::Button("SaveCurSetting"))
+			ImGui::SameLine();
+			if (ImGui::Button("LoadRenContainer"))
 			{
-				genBatch.WriteCurSettingToFile("test.json");
-			}*/
-
+				genBatch.ReadRenContainerFromFile("RenList.json");
+			}
 			static char renNodeBuf[100] = "";
-			int bufSize = 100;
 			ImGui::InputText("##RenNode", renNodeBuf, 100);
 			if (ImGui::Button("AddToRender"))
 			{
-				genBatch.AddHouRenNodePath(std::string(renNodeBuf));
+				//genBatch.AddHouRenNodePath(std::string(renNodeBuf));
+				genBatch.AddHouRenNodePath(0, renNodeBuf);
 			}
 
 			// status view
 			ImGui::SeparatorText("Current Status!");
-			Utility::ImGuiTextWithScale("Selected HouBinDir:", 1.5f);
+			Utility::ImGuiTextWithScale("Current HouBinDir:", 1.5f);
 			ImGui::Text(genBatch.GetHouBinDir().c_str());
 			
-			Utility::ImGuiTextWithScale("Choosed Render Hips:", 1.5f);
-			const std::vector<std::string> hipFiles = genBatch.GetHipPaths();
-			for (auto ite = hipFiles.begin(); ite != hipFiles.end(); ++ite)
+			Utility::ImGuiTextWithScale("Current HipFile and RenNodes:", 1.5f);
+			if (0){
+			for (size_t i=0; i<genBatch.GetSize(); ++i)
 			{
-				ImGui::Text(ite->c_str());
+				const std::string& hipFiles = genBatch.GetHipPath(i);
+				if (ImGui::TreeNode(hipFiles.c_str()))
+				{
+					static int itemSelIndex = 0;
+					// static bool itemHighLighted = false;
+					int itemHighLightedIndex = -1;
+					// ImGui::Checkbox("Highlight hovered item", &itemHighLighted);
+					if (ImGui::BeginListBox("nodes"))
+					{
+						const std::vector<std::string>& renNodes = genBatch.GetNodesPaths(i);
+						for (int n=0; n<renNodes.size(); ++n)
+						{
+							const bool bSelected = (itemSelIndex == n);
+							if (ImGui::Selectable(renNodes[n].c_str(), bSelected))
+							{
+								itemHighLightedIndex = n;
+							}
+							if (bSelected)
+							{
+								ImGui::SetItemDefaultFocus();
+							}
+						}
+						ImGui::EndListBox();
+					}
+					ImGui::TreePop();
+				}
 			}
+			}
+			
+			
+			ImGui::Text("////////////////Testing///////////");
+			if (ImGui::Button("GenRunPyBatch"))
+				genBatch.GenRunPyBatch();
+			ImGui::SameLine();
+			if (ImGui::Button("GenConfigJson"))
+				genBatch.GenConfigJson();
 
-			Utility::ImGuiTextWithScale("Choosed Render Nodes:", 1.5f);
-			const std::vector<std::string> renNodes = genBatch.GetNodesPaths();
-			for (auto ite = renNodes.begin(); ite != renNodes.end(); ++ite)
-			{
-				ImGui::Text(ite->c_str());
-			}
-
-			if (ImGui::Button("ReadFromJson"))
-			{
-				genBatch.GenFromFile("test.json");
-			}
-			if(ImGui::Button("GenBatch"))
-				genBatch.WriteBatchFile();
+			if (ImGui::Button("GenRenListJson"))
+				genBatch.GenRenListJson();
 			ImGui::End();
 		}
 		
