@@ -35,7 +35,7 @@ const std::string& RenContainerNode::GetHipFilePath() const
 }
 
 // 
-const std::vector<std::string>& RenContainerNode::GetRenNodes() const
+std::vector<std::string>& RenContainerNode::GetRenNodes()
 {
 	return m_RenNodes;
 }

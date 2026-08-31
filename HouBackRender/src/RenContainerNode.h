@@ -14,7 +14,7 @@ public:
 
 	void AddRenNode(const std::string& renNode);
 	const std::string& GetHipFilePath() const;
-	const std::vector<std::string>& GetRenNodes() const;
+	std::vector<std::string>& GetRenNodes();
 private:
 	std::string m_HipFilePath;
 	std::vector<std::string> m_RenNodes;

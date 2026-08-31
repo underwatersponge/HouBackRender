@@ -39,17 +39,17 @@ public:
     {
         return m_HouBinDir;
     }
-    const std::string GetHipPath(uint32_t index = 0) const
+    const std::string& GetHipPath(uint32_t index = 0) const
     {
         if(m_RenContainer.size() >0 && index <= m_RenContainer.size())
             return m_RenContainer.at(index).GetHipFilePath();
         return std::string();
     }
-    const std::vector<std::string> GetNodesPaths(uint32_t index = 0) const
+    std::vector<std::string>& GetNodesPaths(uint32_t index = 0)
     {
         if(m_RenContainer.size() > 0 && index <= m_RenContainer.size())
             return m_RenContainer.at(index).GetRenNodes();
-        return std::vector<std::string>();
+        return std::vector<std::string>();// TOFIX:local value will be destory when leven owner scope
     }
 public:
     enum class SaveSettingType : uint32_t

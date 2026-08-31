@@ -1,5 +1,6 @@
 #include "GenBatch.h"
 #include "Utility.cpp"
+#include "SelectionWithDeletion.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -8,6 +9,8 @@
 #include "GLFW/glfw3.h"
 #include "glad/glad.h"
 #include <iostream>
+
+#include "imgui_internal.h"
 
 static void GlfwErrorCallback(int error, const char* description)
 {
@@ -123,7 +126,7 @@ int main()
 					}
 					ImGui::EndMenu();
 				}
-					ImGui::EndMenuBar();
+				ImGui::EndMenuBar();
 			}
 			
 			ImGui::Text("welcome have fun!"); ImGui::SameLine();
@@ -176,39 +179,64 @@ int main()
 			ImGui::Text(genBatch.GetHouBinDir().c_str());
 			
 			Utility::ImGuiTextWithScale("Current HipFile and RenNodes:", 1.5f);
-			if (0){
-			for (size_t i=0; i<genBatch.GetSize(); ++i)
+			
+			for (int i=0; i<genBatch.GetSize(); ++i)
 			{
-				const std::string& hipFiles = genBatch.GetHipPath(i);
-				if (ImGui::TreeNode(hipFiles.c_str()))
+				const std::string& hipPath = genBatch.GetHipPath(i);
+				if (ImGui::TreeNode(hipPath.c_str()))
 				{
-					static int itemSelIndex = 0;
-					// static bool itemHighLighted = false;
-					int itemHighLightedIndex = -1;
-					// ImGui::Checkbox("Highlight hovered item", &itemHighLighted);
-					if (ImGui::BeginListBox("nodes"))
+					std::vector<std::string>& renNodes = genBatch.GetNodesPaths(i);
+					static SelectionWithDeletion selection;
+					selection.UserData = (void*)(renNodes.data());
+					selection.AdapterIndexToStorageId = []( ImGuiSelectionBasicStorage* self, int idx)
 					{
-						const std::vector<std::string>& renNodes = genBatch.GetNodesPaths(i);
-						for (int n=0; n<renNodes.size(); ++n)
+						std::string* p_items = (std::string*)self->UserData + idx;
+						auto str = *p_items;
+						ImGuiWindow* window = ImGui::GetCurrentWindow();
+						ImGuiID id = window->GetID(str.c_str());
+						return id;
+					};
+					ImGui::Text("Selectio size: %d/%d", selection.Size, renNodes.size());
+					// static ImGuiID item_next_id = 0;
+					// (1) Extra to support deletion: Submit scrolling range to avoid glitches on deletion
+					const float items_height = ImGui::GetTextLineHeightWithSpacing();
+					ImGui::SetNextWindowContentSize(ImVec2(0.0f, renNodes.size() * items_height));
+					if (ImGui::BeginChild("##Basket", ImVec2(-FLT_MIN, ImGui::GetFontSize() * 20), ImGuiChildFlags_FrameStyle | ImGuiChildFlags_ResizeY))
+					{
+						ImGuiMultiSelectFlags flags = ImGuiMultiSelectFlags_ClearOnEscape | ImGuiMultiSelectFlags_BoxSelect1d;
+						ImGuiMultiSelectIO* ms_io = ImGui::BeginMultiSelect(flags, selection.Size, renNodes.size());
+						selection.ApplyRequests(ms_io);
+					
+						const bool want_delete = ImGui::Shortcut(ImGuiKey_Delete, ImGuiInputFlags_Repeat) && (selection.Size >0);
+						const int item_curr_idx_to_focus = want_delete ? selection.ApplyDeletionPreLoop(ms_io, renNodes.size()) : -1;
+						for (int n=0; n<renNodes.size(); n++)
 						{
-							const bool bSelected = (itemSelIndex == n);
-							if (ImGui::Selectable(renNodes[n].c_str(), bSelected))
-							{
-								itemHighLightedIndex = n;
-							}
-							if (bSelected)
-							{
-								ImGui::SetItemDefaultFocus();
-							}
+							std::string a =  *(renNodes.begin() + n); 
+							ImGuiWindow* window = ImGui::GetCurrentWindow();
+							// if (window->SkipItems)
+							// return false;
+							ImGuiID item_id = window->GetID(a.c_str());
+
+							char label[64];
+							sprintf(label, "Object %05u:%s", item_id, a.c_str());
+							bool item_is_selected = selection.Contains(item_id);
+							ImGui::SetNextItemSelectionUserData(n);//ImGuiSelectionUserData:int64 
+							ImGui::Selectable(label, item_is_selected);
+							if (item_curr_idx_to_focus == n)
+								ImGui::SetKeyboardFocusHere(-1);
 						}
-						ImGui::EndListBox();
+					
+						// Apply multi-select requests
+						ms_io = ImGui::EndMultiSelect();
+						selection.ApplyRequests(ms_io);
+						if (want_delete)
+							selection.ApplyDeletionPostLoop(ms_io, renNodes, item_curr_idx_to_focus);
 					}
-					ImGui::TreePop();
+					ImGui::EndChild();
+					ImGui::TreePop();	
 				}
 			}
-			}
-			
-			
+// #endif
 			ImGui::Text("////////////////Testing///////////");
 			if (ImGui::Button("GenRunPyBatch"))
 				genBatch.GenRunPyBatch();
