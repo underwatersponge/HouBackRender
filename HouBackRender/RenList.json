@@ -20,7 +20,12 @@
         },
         {
             "HipPath": "C:/Users/HRXlubang/Desktop/BackRen/TestHIP/Test.hip",
-            "RenNode": []
+            "RenNode": [
+                "/out/a",
+                "/out/b",
+                "/out/c",
+                "/out/test"
+            ]
         }
     ]
 }

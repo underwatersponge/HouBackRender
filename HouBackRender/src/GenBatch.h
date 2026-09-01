@@ -18,6 +18,7 @@ public:
     void Init(const std::filesystem::path &configPath, const std::filesystem::path& renInfoPath = std::filesystem::path());
     void ReadConfigFromFile(const std::filesystem::path& jsonPath);
     void ReadRenContainerFromFile(const std::filesystem::path& jsonPath);
+    void ReadRenNodesFromFile(const std::filesystem::path& jsonPath, RenContainerNode& renContainerNode);
     
     void SetHouBinPath(const std::string& dirPath);
     void AddHipPath(const std::string& hipPath);
@@ -39,17 +40,23 @@ public:
     {
         return m_HouBinDir;
     }
-    const std::string& GetHipPath(uint32_t index = 0) const
+    const std::string& GetHipPath(uint32_t index) const
     {
         if(m_RenContainer.size() >0 && index <= m_RenContainer.size())
             return m_RenContainer.at(index).GetHipFilePath();
         return std::string();
     }
-    std::vector<std::string>& GetNodesPaths(uint32_t index = 0)
+    std::vector<std::string>& GetNodesPaths(uint32_t index)
     {
         if(m_RenContainer.size() > 0 && index <= m_RenContainer.size())
             return m_RenContainer.at(index).GetRenNodes();
-        return std::vector<std::string>();// TOFIX:local value will be destory when leven owner scope
+        return std::vector<std::string>();// TOFIX:local value will be destory when leven owner scope,did use std::optional?i do not want use
+    }
+    RenContainerNode& GetRenContainerNode(uint32_t index)
+    {
+        if (m_RenContainer.size() > 0 && index <= m_RenContainer.size())
+            return m_RenContainer.at(index);
+        return RenContainerNode();
     }
 public:
     enum class SaveSettingType : uint32_t

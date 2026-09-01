@@ -6,6 +6,8 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <regex>
+
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
@@ -118,5 +120,25 @@ namespace Utility
             data = json::parse(f);
         f.close();
         return data;
+    }
+
+    static void ExtRenNode(std::vector<std::string>& result, const std::string& str)
+    {
+        std::regex pattern(R"(/out/[^/]+)");
+        std::sregex_iterator ite(str.begin(), str.end(), pattern);
+        std::sregex_iterator end;
+        for (; ite != end; ++ite)
+        {
+            result.push_back(ite->str());
+        }
+    }
+    static void SplitByChar(std::vector<std::string>& result, const std::string& str, char delimiter)
+    {
+        std::istringstream iss(str);
+        std::string item;
+        while (std::getline(iss, item, delimiter))
+        {
+            result.push_back(item);
+        }
     }
 }

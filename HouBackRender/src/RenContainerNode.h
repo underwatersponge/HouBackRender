@@ -7,7 +7,7 @@ class RenContainerNode
 {
 public:
 	RenContainerNode();
-	RenContainerNode(const std::string& hipPath = std::string(), const std::vector<std::string>& renNodes = std::vector<std::string>());
+	RenContainerNode(const std::string& hipPath, const std::vector<std::string>& renNodes = std::vector<std::string>());
 
 	void Add(const std::string& hipPath = std::string(), const std::vector<std::string>& renNodes = std::vector<std::string>());
 	void Remove();

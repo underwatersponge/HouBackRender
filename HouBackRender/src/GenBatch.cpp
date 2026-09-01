@@ -33,8 +33,8 @@ void GenBatch::ReadRenContainerFromFile(const std::filesystem::path& jsonPath)
     const json jsonDatat = Utility::ReadJson(jsonPath);
     if (jsonDatat.contains("RenList"))
     {
-        const auto& RenList = jsonDatat.at("RenList");
-        for (auto ite = RenList.begin(); ite != RenList.end(); ++ite)
+        const auto& renList = jsonDatat.at("RenList");
+        for (auto ite = renList.begin(); ite != renList.end(); ++ite)
         {
             if (ite->contains("HipPath"))
             {
@@ -45,6 +45,31 @@ void GenBatch::ReadRenContainerFromFile(const std::filesystem::path& jsonPath)
                     renNodes = ite->at("RenNode").get<std::vector<std::string>>();
                 }
                 m_RenContainer.push_back(RenContainerNode(hipPath, renNodes));
+            }
+        }
+    }
+}
+
+void GenBatch::ReadRenNodesFromFile(const std::filesystem::path& jsonPath, RenContainerNode& renContainerNode)
+{
+    const json jsonData = Utility::ReadJson(jsonPath);
+    if (jsonData.contains("RenList"))
+    {
+        const auto& renList = jsonData.at("RenList");
+        for (auto ite = renList.begin(); ite != renList.end(); ++ite)
+        {
+            if (ite->contains("HipPath"))
+            {
+                std::string hipPath = ite->at("HipPath").get<std::string>();
+                if(hipPath == renContainerNode.GetHipFilePath())
+                {
+                    if (ite->contains("RenNode"))
+                    {
+                        const auto& renNodes = ite->at("RenNode");
+                        for (auto ite1 = renNodes.begin(); ite1!=renNodes.end(); ++ite1)
+                            renContainerNode.AddRenNode(ite1->get<std::string>());      
+                    }
+                }
             }
         }
     }
@@ -146,7 +171,7 @@ void GenBatch::SetHouBinPath(const std::string& dirPath)
 
 void GenBatch::AddHipPath(const std::string& hipPath)
 {
-    // TODO: true multi file support
+    // here maybe trigger a bug?: with multi add same hipfile
     if(!hipPath.empty())
         m_RenContainer.emplace_back(hipPath);
 }
