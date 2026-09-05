@@ -150,11 +150,7 @@ int main()
 			{
 				genBatch.AddHipPathFromFile(window);
 			}
-			// ImGui::SameLine();
-			// if (ImGui::Button("Clean"))
-			// {
-			// 	genBatch.Clean(0);
-			// }
+		
 			ImGui::SameLine();
 			if (ImGui::Button("ClearAll"))
 			{
@@ -170,17 +166,16 @@ int main()
 			ImGui::SeparatorText("Current Status!");
 			Utility::ImGuiTextWithScale("Current HouBinDir:", 1.5f);
 			ImGui::Text(genBatch.GetHouBinDir().c_str());
-			
 			Utility::ImGuiTextWithScale("Current HipFile and RenNodes:", 1.5f);
 			
 			int hipNum = genBatch.GetSize(); 
+			static SelectionWithDeletion selection;
 			for (int i=0; i<hipNum; ++i)
 			{
 				const std::string& hipPath = genBatch.GetHipPath(i);
 				if (ImGui::TreeNode(hipPath.c_str()))
 				{
 					std::vector<std::string>& renNodes = genBatch.GetNodesPaths(i);
-					static SelectionWithDeletion selection;
 					selection.UserData = (void*)(renNodes.data());
 					selection.AdapterIndexToStorageId = []( ImGuiSelectionBasicStorage* self, int idx)
 					{
@@ -202,14 +197,55 @@ int main()
 					}
 					ImGui::SameLine();
 					if (ImGui::Button("Clean"))
-						genBatch.Clean(i);
-			
-					static char renNodeBuf[20][50];// TODO:make it no bug 
-					ImGui::InputText("RenNode", renNodeBuf[i], 100);ImGui::SameLine();
-					if (ImGui::Button("AddToRender"))
 					{
-						//TODO:stringn splilt to multi rennode
-						genBatch.AddHouRenNodePath(i, renNodeBuf[i]);
+						selection.toClean = i;
+					}
+			
+					static char renNodeBuf[20][100];// TODO:make it no bug 
+					ImGui::InputText("##RenNode", renNodeBuf[i], 100);ImGui::SameLine();
+					
+					// choose split combo
+					ImGuiComboFlags flags = ImGuiComboFlags_PopupAlignLeft | ImGuiComboFlags_HeightSmall |ImGuiComboFlags_WidthFitPreview;
+                    // flags |= ImGuiComboFlags_PopupAlignLeft;
+					static bool bUseSplit;
+					ImGui::Checkbox("usesplit:",&bUseSplit);ImGui::SameLine();
+					std::array<std::string, 3> splits = {"/out","/karma","custom"}; 
+                    static int which = 0;
+					if (bUseSplit)
+					{
+						if (ImGui::BeginCombo("##methSplit", splits[which].c_str(), flags))
+						{
+							for (int n=0; n<splits.size(); n++)
+							{
+								const bool bSelected = (which == n);
+								if (ImGui::Selectable(splits[n].c_str(), bSelected))
+									which = n;
+								if(bSelected)
+									ImGui::SetItemDefaultFocus();
+							}
+							ImGui::EndCombo();
+						}
+					}
+					// TODO:find a better way
+					static char customStrBuffer[10];
+					if (which == splits.size()-1)
+					{
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(73.f);
+						ImGui::InputText("##customSplit", customStrBuffer, 10);
+					}
+					
+					ImGui::SameLine();
+					if (ImGui::Button("Add"))
+					{
+						if (!bUseSplit)
+							genBatch.GetRenContainerNode(i).AddRenNodesWithSpace(renNodeBuf[i]);
+						else
+						{
+							if (which == splits.size() - 1)
+								genBatch.GetRenContainerNode(i).AddRenNodesWithSplit(renNodeBuf[i], customStrBuffer);
+							genBatch.GetRenContainerNode(i).AddRenNodesWithSplit(renNodeBuf[i], splits[which].c_str());
+						}
 					}
 					// (1) Extra to support deletion: Submit scrolling range to avoid glitches on deletion
 					const float items_height = ImGui::GetTextLineHeightWithSpacing();
@@ -226,8 +262,6 @@ int main()
 						{
 							std::string a =  *(renNodes.begin() + n); 
 							ImGuiWindow* window = ImGui::GetCurrentWindow();
-							// if (window->SkipItems)
-							// return false;
 							ImGuiID item_id = window->GetID(a.c_str());
 
 							char label[64];
@@ -249,30 +283,21 @@ int main()
 					ImGui::TreePop();	
 				}
 			}
+			if (selection.toClean != -1)
+			{
+				genBatch.Clean(selection.toClean);
+				selection.toClean = -1;
+			}
 // #endif
-			ImGui::Text("////////////////Testing///////////");
 			if (ImGui::Button("GenRunPyBatch"))
 				genBatch.GenRunPyBatch();
 			ImGui::SameLine();
 			if (ImGui::Button("GenConfigJson"))
 				genBatch.GenConfigJson();
-
+			ImGui::SameLine();
 			if (ImGui::Button("GenRenListJson"))
 				genBatch.GenRenListJson();
-			
-			static std::vector<std::string> items;
-			static std::string testStr = "/out/__dot1 /out/mantra2 /out/mantra1 /out/mantra4 /out/mantra3 /out/mantra5";
-			ImGui::Text(testStr.c_str());
-			if (ImGui::Button("testFun"))
-			{
-				// Utility::ExtRenNode(items, testStr);
-				Utility::SplitByChar(items, testStr, ' ');
-			}
-			for (auto& str: items)
-			{
-				ImGui::Text(str.c_str());
-			}
-			
+	
 			ImGui::End();
 		}
 		if (show_another_window)

@@ -122,9 +122,11 @@ namespace Utility
         return data;
     }
 
-    static void ExtRenNode(std::vector<std::string>& result, const std::string& str)
+    static void ExtRenNode(std::vector<std::string>& result, const std::string& str, const char* splitStr)
     {
-        std::regex pattern(R"(/out/[^/]+)");
+        std::string split = std::string(splitStr) + "/[^/]";
+        std::regex pattern(split);
+        
         std::sregex_iterator ite(str.begin(), str.end(), pattern);
         std::sregex_iterator end;
         for (; ite != end; ++ite)

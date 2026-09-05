@@ -59,4 +59,5 @@ struct SelectionWithDeletion : public ImGuiSelectionBasicStorage
         if (item_next_idx_to_select != -1 && ms_io->NavIdSelected)
             SetItemSelected(GetStorageIdFromIndex(item_next_idx_to_select), true);
     }
+    int toClean = -1;
 };

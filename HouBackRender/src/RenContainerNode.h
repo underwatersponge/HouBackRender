@@ -13,6 +13,8 @@ public:
 	void Remove();
 
 	void AddRenNode(const std::string& renNode);
+	void AddRenNodesWithSpace(const std::string& renNodeString);
+	void AddRenNodesWithSplit(const std::string& renNodesString, const char* splitStr);
 	const std::string& GetHipFilePath() const;
 	std::vector<std::string>& GetRenNodes();
 private:

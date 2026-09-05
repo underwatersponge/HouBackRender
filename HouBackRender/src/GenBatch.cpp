@@ -193,6 +193,11 @@ void GenBatch::AddHipPathFromFile(GLFWwindow* window, const char* filter)
 {
     std::string path = Utility::GetFilePath(window, filter);
     std::replace(path.begin(), path.end(), '\\', '/');
+    for (const auto& ele : m_RenContainer)
+    {
+        if (path == ele.GetHipFilePath())
+            return;
+    }
     AddHipPath(path);
 }
 

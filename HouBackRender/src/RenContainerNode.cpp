@@ -1,4 +1,5 @@
 #include "RenContainerNode.h"
+#include "Utility.cpp"
 
 RenContainerNode::RenContainerNode()
 {
@@ -27,6 +28,16 @@ void RenContainerNode::Remove()
 void RenContainerNode::AddRenNode(const std::string& renNode)
 {
 	m_RenNodes.push_back(renNode);
+}
+
+void RenContainerNode::AddRenNodesWithSpace(const std::string& renNodeString)
+{
+	Utility::SplitByChar(m_RenNodes, renNodeString, ' ');
+}
+
+void RenContainerNode::AddRenNodesWithSplit(const std::string& renNodesString, const char* splitStr)
+{
+	Utility::ExtRenNode(m_RenNodes, renNodesString, splitStr);
 }
 
 const std::string& RenContainerNode::GetHipFilePath() const
