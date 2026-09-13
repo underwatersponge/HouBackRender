@@ -15,6 +15,10 @@
 #include <json.hpp>
 
 #include <iostream>
+#include <thread>
+
+#include "GenBatch.h"
+
 namespace Utility
 {
     using json = nlohmann::json;
@@ -122,6 +126,66 @@ namespace Utility
         return data;
     }
 
+    // why rang me writed in class genBatch? and not return but set to 
+    static std::vector<std::string> ReadRenNodesFromJsonFile(const std::filesystem::path& path)
+    {
+        std::vector<std::string> result;
+        const json jsonData = ReadJson(path);
+        std::string str = jsonData.dump();
+        std::cout << str<< std::endl;
+        if (jsonData.contains("RenList"))
+        {
+            const auto& renList = jsonData.at("RenList");
+            for (auto ite = renList.begin(); ite != renList.end(); ++ite)
+            {
+                // if (ite->contains("HipPath")
+                if (ite->contains("RenNode"))
+                {
+                    const auto& renNode = ite->at("RenNode");
+                    result.reserve(renNode.size());
+                    for (auto ite1 = renNode.begin(); ite1 != renNode.end(); ++ite1)
+                    {
+                        result.push_back(ite1->get<std::string>());
+                    }
+                }
+            }
+        }
+        return result;
+    }
+    
+    static std::pair<std::string, std::vector<std::string>> PreChooseNodePane(GenBatch& genBatch, GLFWwindow* window)
+    {
+        std::string houbin = genBatch.GetHouBinDir();
+        if (houbin.empty())
+        {
+            genBatch.SetHouBinPathFromDir(window);
+            houbin = genBatch.GetHouBinDir();
+        }
+        std::string hython = "\"" + houbin + "\\hython.exe" + "\"";
+        std::string hipFile = Utility::GetFilePath(window, ".hip");
+        std::string cmd = "call";
+        cmd += " " + hython + " ";
+        cmd += "\"NodeGet.py\"";
+        cmd += " ";
+        cmd += hipFile;
+        cmd += "\n";
+        cmd += "pause";
+        std::cout << cmd << std::endl;
+        system(cmd.c_str());
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+				
+        std::string first = hipFile;
+        size_t pos = hipFile.rfind("\\");
+        std::string jsonpath = hipFile.substr(0, pos + 1);
+        jsonpath += "savedNode.json";
+#ifdef _DEBUG
+        std::cout <<"AAAAA:" << jsonpath << std::endl;
+#endif				
+        std::vector<std::string> second = Utility::ReadRenNodesFromJsonFile(jsonpath);
+        
+        return std::make_pair(first, second);
+    }
+    
     static void ExtRenNode(std::vector<std::string>& result, const std::string& str, const char* splitStr)
     {
         std::string split = std::string(splitStr) + "/[^/]";

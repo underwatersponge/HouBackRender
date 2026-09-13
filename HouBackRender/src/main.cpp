@@ -5,12 +5,15 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "imgui_internal.h"
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
 #include "glad/glad.h"
-#include <iostream>
 
-#include "imgui_internal.h"
+#include <iostream>
+#include <cstdlib>
+#include <chrono>
+#include <thread>
 
 static void GlfwErrorCallback(int error, const char* description)
 {
@@ -161,7 +164,36 @@ int main()
 			{
 				genBatch.ReadRenContainerFromFile("RenList.json");
 			}
+			
+			// choose node pane
+			static bool show_nodechoose_pane = false;
+			static std::pair<std::string, std::vector<std::string>> chooseNodePaneInfo;
+			ImGui::SameLine();
+			if (ImGui::Button("SearchNode"))
+			{
+				show_nodechoose_pane = true;
+				chooseNodePaneInfo= Utility::PreChooseNodePane(genBatch, window);
 
+			}
+			
+			// choose node ui
+			if (show_nodechoose_pane)
+			{
+				ImGui::Begin("NodeChoosePane");
+				Utility::ImGuiTextWithScale(chooseNodePaneInfo.first.c_str(), 1.5);
+				if (ImGui::Button("ChangeFile"))
+					chooseNodePaneInfo = Utility::PreChooseNodePane(genBatch, window);
+				ImGui::SameLine();
+				if (ImGui::Button("Close"))
+					show_nodechoose_pane = false;
+				ImGui::Text("TODO:");
+				for (auto ite = chooseNodePaneInfo.second.begin(); ite != chooseNodePaneInfo.second.end(); ++ite)
+				{
+					ImGui::Text(ite->c_str());
+				}
+				ImGui::End();
+			}
+			
 			// status view
 			ImGui::SeparatorText("Current Status!");
 			Utility::ImGuiTextWithScale("Current HouBinDir:", 1.5f);
@@ -209,7 +241,7 @@ int main()
                     // flags |= ImGuiComboFlags_PopupAlignLeft;
 					static bool bUseSplit;
 					ImGui::Checkbox("usesplit:",&bUseSplit);ImGui::SameLine();
-					std::array<std::string, 3> splits = {"/out","/karma","custom"}; 
+					static std::array<std::string, 3> splits = {"/out","/karma","custom"}; 
                     static int which = 0;
 					if (bUseSplit)
 					{
@@ -300,6 +332,7 @@ int main()
 	
 			ImGui::End();
 		}
+		
 		if (show_another_window)
 		{
 			ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
