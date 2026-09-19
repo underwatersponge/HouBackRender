@@ -1,6 +1,7 @@
 #include "GenBatch.h"
 #include "Utility.cpp"
 #include "SelectionWithDeletion.h"
+#include "DualListBox.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -172,28 +173,43 @@ int main()
 			if (ImGui::Button("SearchNode"))
 			{
 				show_nodechoose_pane = true;
-				chooseNodePaneInfo= Utility::PreChooseNodePane(genBatch, window);
-
+				chooseNodePaneInfo = Utility::PreChooseNodePane(genBatch, window);
 			}
 			
 			// choose node ui
 			if (show_nodechoose_pane)
 			{
 				ImGui::Begin("NodeChoosePane");
+				
+				static DualListBox dlb(chooseNodePaneInfo.second);
 				Utility::ImGuiTextWithScale(chooseNodePaneInfo.first.c_str(), 1.5);
 				if (ImGui::Button("ChangeFile"))
+				{
+					
 					chooseNodePaneInfo = Utility::PreChooseNodePane(genBatch, window);
+					dlb.ResetCustomUserData(chooseNodePaneInfo.second);
+				}
 				ImGui::SameLine();
 				if (ImGui::Button("Close"))
 					show_nodechoose_pane = false;
-				ImGui::Text("TODO:");
-				for (auto ite = chooseNodePaneInfo.second.begin(); ite != chooseNodePaneInfo.second.end(); ++ite)
+				ImGui::SameLine();
+				if (ImGui::Button("Send to")) 
 				{
-					ImGui::Text(ite->c_str());
+					genBatch.AddHipPath(chooseNodePaneInfo.first);
+					int index = genBatch.GetSize() - 1;
+					std::cout << "the first strone:" << "\n";
+					for (auto item_id : dlb.Items[1])
+					{
+						std::cout << item_id << "," << "\n";
+						genBatch.AddHouRenNodePath(index, chooseNodePaneInfo.second.at(item_id));
+					}
 				}
+
+				dlb.Show();
+
 				ImGui::End();
 			}
-			
+
 			// status view
 			ImGui::SeparatorText("Current Status!");
 			Utility::ImGuiTextWithScale("Current HouBinDir:", 1.5f);
@@ -276,7 +292,8 @@ int main()
 						{
 							if (which == splits.size() - 1)
 								genBatch.GetRenContainerNode(i).AddRenNodesWithSplit(renNodeBuf[i], customStrBuffer);
-							genBatch.GetRenContainerNode(i).AddRenNodesWithSplit(renNodeBuf[i], splits[which].c_str());
+							else
+								genBatch.GetRenContainerNode(i).AddRenNodesWithSplit(renNodeBuf[i], splits[which].c_str());
 						}
 					}
 					// (1) Extra to support deletion: Submit scrolling range to avoid glitches on deletion

@@ -171,6 +171,8 @@ namespace Utility
         cmd += "\n";
         cmd += "pause";
         std::cout << cmd << std::endl;
+        if (hipFile.empty())
+            return std::pair<std::string, std::vector<std::string >> ();
         system(cmd.c_str());
         std::this_thread::sleep_for(std::chrono::seconds(1));
 				
@@ -187,8 +189,8 @@ namespace Utility
     }
     
     static void ExtRenNode(std::vector<std::string>& result, const std::string& str, const char* splitStr)
-    {
-        std::string split = std::string(splitStr) + "/[^/]";
+    {        
+        std::string split = std::string(splitStr) + "/[^/]+";
         std::regex pattern(split);
         
         std::sregex_iterator ite(str.begin(), str.end(), pattern);
