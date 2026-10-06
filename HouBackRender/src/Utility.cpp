@@ -230,11 +230,12 @@ namespace Utility
         ImGui::Begin("Hope you have fun with that!", nullptr, windowFlags);
 
         static std::string errorStr;
-        if (ImGui::Button("Run"))
+        if (ImGui::IsKeyPressed(ImGuiKey_Enter))
         {
             errorStr.clear();
             errorStr += shader.ReCreate(nullptr, text);
         }
+
         static float editorAreaHeight = 500.f;
         // editor area
         ImGui::BeginChild("editArea", ImVec2(0, editorAreaHeight),0, windowFlags);
