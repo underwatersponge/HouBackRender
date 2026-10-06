@@ -2,6 +2,8 @@
 #include "Utility.cpp"
 #include "SelectionWithDeletion.h"
 #include "DualListBox.h"
+#include "ShaderFun/ShaderFunToy.h"
+#include "ShaderFun/Shader.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -44,13 +46,13 @@ int main()
 		return -1;
 	}
 	glfwMakeContextCurrent(window);
+	// TODO:framebuffer size callback
 	glfwSwapInterval(1);
 	
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)){
 		std::cout << "can not load opengl function " << std::endl;
 		return -1;
 	}
-	
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -83,7 +85,16 @@ int main()
 	
 	bool show_demo_window = true;
 	bool show_another_window = false;
-	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+	ImVec4 clear_color = ImVec4(1.f, 1.f, 0.0f, 1.00f);
+	
+	// ===========shader fun==============
+	static bool bPlayShader = false;
+	ShaderFunToy shaderFun;
+	shaderFun.Init();
+
+	Shader shader;
+	shader.Create();
+	// ================================
 	
 	while (!glfwWindowShouldClose(window))
 	{
@@ -94,11 +105,23 @@ int main()
 			continue;
 		}
 		
+		// =========================shaderFun====================
+		if (bPlayShader)
+		{
+			shader.Use();
+			shaderFun.Update();
+		}
+		else
+		{
+			shaderFun.ShutDown();
+		}
+		
+		// ========================shaderFun====================
+		
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 		ImGui::DockSpaceOverViewport();
-		
 #ifdef _DEBUG
 		if (show_demo_window)
 			ImGui::ShowDemoWindow(&show_demo_window);
@@ -127,6 +150,18 @@ int main()
 					if (ImGui::MenuItem("SaveAll"))
 					{
 						//genBatch.WriteCurSettingToFile("test.json", GenBatch::SaveSettingType::All);
+					}
+					ImGui::EndMenu();
+				}
+				if (ImGui::BeginMenu("PlayShader"))
+				{
+					if (ImGui::MenuItem("Start"))
+					{
+						bPlayShader = true;
+					}
+					if (ImGui::MenuItem("End"))
+					{
+						bPlayShader = false;
 					}
 					ImGui::EndMenu();
 				}
@@ -350,6 +385,23 @@ int main()
 			ImGui::End();
 		}
 		
+		if (bPlayShader)
+		{
+			// TODO:where to place that is better?
+			// ImGui::Begin("Show Custom render");
+			// ImGui::Text("hello under water sponge");
+			// ImGui::Image((ImTextureID)shaderFun.GetTexture(), ImVec2(800,450));
+			//
+			// static char text[1024 * 16] = 
+			// 	"hello under water sponge!\n"
+			// "you can edit code in here to play with shader!\n";
+			// static ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput;
+			// ImGui::InputTextMultiline("##codeEidt", text, IM_COUNTOF(text), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
+			// ImGui::End();
+			//ImTextureID textureId = (ImTextureID)shaderFun.GetTexture();
+			Utility::ShaderEditPane(shaderFun, shader);
+		}
+		
 		if (show_another_window)
 		{
 			ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
@@ -359,10 +411,10 @@ int main()
 			ImGui::End();
 		}
 		
-		ImGui::Render();
 		int display_w, display_h;
 		glfwGetFramebufferSize(window, &display_w, &display_h);
 		glViewport(0, 0, display_w, display_h);
+		ImGui::Render();
 		glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
 		glClear(GL_COLOR_BUFFER_BIT);
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
