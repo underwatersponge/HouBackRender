@@ -20,6 +20,7 @@ public:
     unsigned int GetResolutionWidth() const { return ResolutionWidth; }
     unsigned int GetResolutionHeight() const { return ResolutionHeight; }
     float GetAspectRatio() const {return (float)ResolutionWidth / (float)ResolutionHeight; }
+    int GetFPS() const {return FPS;}
 private:
     void InitVAO();
     void InitVBO();
@@ -50,4 +51,7 @@ private:
     float AspectRatio = 16.0f / 9.f;
     unsigned int ResolutionWidth= 1;
     unsigned int ResolutionHeight= 1;
+    
+    float lastTime = 0.f;
+    int FPS = 0;
 };

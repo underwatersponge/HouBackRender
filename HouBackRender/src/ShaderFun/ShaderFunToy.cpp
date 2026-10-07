@@ -1,5 +1,7 @@
 ﻿#include "ShaderFunToy.h"
 
+#include <GLFW/glfw3.h>
+
 ShaderFunToy::ShaderFunToy()
 {
 }
@@ -92,6 +94,11 @@ void ShaderFunToy::ShutDown()
 
 void ShaderFunToy::Update()
 {
+    float nowTime = glfwGetTime();
+    float deltaTime = nowTime - lastTime;
+    lastTime = nowTime;
+    FPS = int(1.0 / deltaTime);
+    
     ResizeAttachTexture();
     AttackTexToBuffer();
 

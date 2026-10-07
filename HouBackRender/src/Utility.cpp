@@ -129,7 +129,6 @@ namespace Utility
         return data;
     }
 
-    // why rang me writed in class genBatch? and not return but set to 
     static std::vector<std::string> ReadRenNodesFromJsonFile(const std::filesystem::path& path)
     {
         std::vector<std::string> result;
@@ -211,72 +210,5 @@ namespace Utility
         {
             result.push_back(item);
         }
-    }
-    
-    // shader code edit pane and view shader result
-    static void ShaderEditPane(ShaderFunToy& shaderFunToy, Shader& shader)
-    {
-        // TODO:not limit string
-        static char text[1024 * 16] =
-            "//this is from shadertoy default start shader!\n"
-            "see in https://www.shadertoy.com/new\n"
-            "#version 400 core\n"
-            "out vec4 FragColor;\n"
-            "in vec2 uv;\n"
-            "uniform float iTime;\n"
-            "uniform vec2 mousePos;\n"
-            "void main()\n"
-            "{\n"
-            "vec3 col = 0.5 + 0.5 * cos(iTime + uv.xyx + vec3(0,2,4));\n"
-            "FragColor = vec4(col,1.f);\n"
-            "}\n";
-
-        const ImTextureID textureId = shaderFunToy.GetTextureID();
-
-        ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoScrollbar;
-        ImGui::Begin("Hope you have fun with that!", nullptr, windowFlags);
-
-        static std::string errorStr;
-        if (ImGui::IsKeyPressed(ImGuiKey_Enter))
-        {
-            errorStr.clear();
-            errorStr += shader.ReCreate(nullptr, text);
-        }
-
-        static float editorAreaHeight = 500.f;
-        // editor area
-        ImGui::BeginChild("editArea", ImVec2(0, editorAreaHeight),0, windowFlags);
-            
-            ImVec2 availArea = ImGui::GetContentRegionAvail();
-            ImGui::Columns(2);
-            int columnIndex = ImGui::GetColumnIndex();
-            ImVec2 leftArea = ImGui::GetContentRegionAvail();
-            float aspectRatio = shaderFunToy.GetAspectRatio();
-
-            if (shaderFunToy.GetResolutionWidth() != (int)leftArea.x)
-            {
-                shaderFunToy.SetResolution(leftArea.x);
-            }
-            ImGui::Image(textureId, ImVec2(leftArea.x, leftArea.x / aspectRatio));
-
-            ImGui::NextColumn();
-            ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput;
-            ImGui::InputTextMultiline("##codeEdit", text, IM_COUNTOF(text), ImVec2(-FLT_MIN, editorAreaHeight), flags);
-            
-            ImGui::Columns(1);
-        ImGui::EndChild();
-
-        ImGui::Separator();
-        ImGui::InvisibleButton("##separator", ImVec2(-FLT_MIN, 7.f));
-        if (ImGui::IsItemHovered())
-        {
-            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
-        }
-        if (ImGui::IsItemActive())
-        {
-            editorAreaHeight += ImGui::GetIO().MouseDelta.y;
-        }
-        ImGui::Text(errorStr.c_str());
-        ImGui::End();
     }
 }

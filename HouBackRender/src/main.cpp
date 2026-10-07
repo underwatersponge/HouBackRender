@@ -4,6 +4,7 @@
 #include "DualListBox.h"
 #include "ShaderFun/ShaderFunToy.h"
 #include "ShaderFun/Shader.h"
+#include "ShaderFun/ShaderFunPane.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -117,9 +118,10 @@ int main()
 		if (bPlayShader)
 		{
 			time = glfwGetTime();
-			mousePos = ImGui::GetMousePos();
-			shader.SetUniform1f("iTime", time);
-			shader.SetUniform2f("mousePos", mousePos.x, mousePos.y);
+			if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+				mousePos = ImGui::GetMousePos();
+			shader.SetUniform1f("inTime", time);
+			shader.SetUniform2f("inMousePos", mousePos.x, mousePos.y);
 			shader.Use();
 			shaderFun.Update();
 		}
@@ -406,7 +408,7 @@ int main()
 			// ImGui::InputTextMultiline("##codeEidt", text, IM_COUNTOF(text), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
 			// ImGui::End();
 			//ImTextureID textureId = (ImTextureID)shaderFun.GetTexture();
-			Utility::ShaderEditPane(shaderFun, shader);
+			ShaderFun::ShaderEditPane(shaderFun, shader, &bPlayShader);
 		}
 		
 		if (show_another_window)
