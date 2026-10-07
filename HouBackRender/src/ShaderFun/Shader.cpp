@@ -106,6 +106,22 @@ std::string Shader::ReCreate(const char* vertexCodeSrc, const char* fragmentCode
     return(Create(vertexCodeSrc, fragmentCodeSrc));
 }
 
+void Shader::SetUniform1f(const char* name, float value)
+{
+    GLint location = glGetUniformLocation(Program, name);
+    if (location == -1)
+        return;
+    glUniform1f(location, value);
+}
+
+void Shader::SetUniform2f(const char* name, float v0, float v1)
+{
+    GLint location = glGetUniformLocation(Program, name);
+    if (location == -1)
+        return;
+    glUniform2f(location, v0, v1);
+}
+
 void Shader::Use() const
 {
     glUseProgram(Program);

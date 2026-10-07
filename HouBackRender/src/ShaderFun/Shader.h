@@ -15,6 +15,8 @@ class Shader
 public:
     std::string Create(const char* vertexCodeSrc = nullptr, const char* fragmentCodeSrc = nullptr);
     std::string ReCreate(const char* vertexCodeSrc, const char* fragmentCodeSrc);
+    void SetUniform1f(const char* name, float value);
+    void SetUniform2f(const char* name, float v0, float v1);
     void Use() const;
 private:
     void CreatePragma();

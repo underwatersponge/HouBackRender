@@ -105,9 +105,21 @@ int main()
 			continue;
 		}
 		
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+		ImGui::DockSpaceOverViewport();
+		
+
 		// =========================shaderFun====================
+		static float time = 0.f;
+		static ImVec2 mousePos = ImVec2(0.f, 0.f);
 		if (bPlayShader)
 		{
+			time = glfwGetTime();
+			mousePos = ImGui::GetMousePos();
+			shader.SetUniform1f("iTime", time);
+			shader.SetUniform2f("mousePos", mousePos.x, mousePos.y);
 			shader.Use();
 			shaderFun.Update();
 		}
@@ -115,13 +127,8 @@ int main()
 		{
 			shaderFun.ShutDown();
 		}
-		
 		// ========================shaderFun====================
-		
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
-		ImGui::DockSpaceOverViewport();
+
 #ifdef _DEBUG
 		if (show_demo_window)
 			ImGui::ShowDemoWindow(&show_demo_window);

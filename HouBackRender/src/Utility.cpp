@@ -216,12 +216,19 @@ namespace Utility
     // shader code edit pane and view shader result
     static void ShaderEditPane(ShaderFunToy& shaderFunToy, Shader& shader)
     {
-        static char text[1024 * 16] = "#version 400 core\n"
+        // TODO:not limit string
+        static char text[1024 * 16] =
+            "//this is from shadertoy default start shader!\n"
+            "see in https://www.shadertoy.com/new\n"
+            "#version 400 core\n"
             "out vec4 FragColor;\n"
             "in vec2 uv;\n"
+            "uniform float iTime;\n"
+            "uniform vec2 mousePos;\n"
             "void main()\n"
             "{\n"
-            "FragColor = vec4(1.f, 0.f,0.f,1.f);\n"
+            "vec3 col = 0.5 + 0.5 * cos(iTime + uv.xyx + vec3(0,2,4));\n"
+            "FragColor = vec4(col,1.f);\n"
             "}\n";
 
         const ImTextureID textureId = shaderFunToy.GetTextureID();
@@ -260,7 +267,7 @@ namespace Utility
         ImGui::EndChild();
 
         ImGui::Separator();
-        ImGui::InvisibleButton("##separator", ImVec2(-FLT_MIN, 40.f));
+        ImGui::InvisibleButton("##separator", ImVec2(-FLT_MIN, 7.f));
         if (ImGui::IsItemHovered())
         {
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
