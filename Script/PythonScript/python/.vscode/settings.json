@@ -1,4 +1,4 @@
 {
-    "python.defaultInterpreterPatah":"C:/Program Files/Side Effects Software/Houdini 20.5.278/bin/hython3.11.exe",
-    "python.analysis.extraPaths":["C:/Program Files/Side Effects Software/Houdini 20.5.278/houdini/python3.11libs"]   
+    "python.defaultInterpreterPatah":"F:/Houdini22/Houdini22.0.429/bin/hython3.11.exe",
+    "python.analysis.extraPaths":["F:/Houdini22/Houdini22.0.429/houdini/python3.13libs"]   
 }
